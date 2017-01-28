@@ -15,11 +15,23 @@ private:
 
 	File myFile;
 	String logName;
-	void initSDCard(String fname);
+
+
+	bool cardInit;
+
+	String callDirName();
+	String callFileName();
+	bool logging;
 public:
 	Logger();
+	void initSDCard();
 	void logData(String in);
-	void startLog(String name);
+	void startLog(String dirname, String filename);
+	void stopLog();
+	void logStartStop();
+	bool isLogging(){
+		return logging;
+	}
 };
 
 

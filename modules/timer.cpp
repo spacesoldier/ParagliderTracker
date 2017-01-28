@@ -6,10 +6,42 @@ Timer::Timer(){
 
 String Timer::makeLogName(){
 	timeNow = rtc.now();
-	String result = String(timeNow.month());
+	String result = "";
+	if (timeNow.month()<10){
+		result+='0';
+	}
+	result += String(timeNow.month());
+	if (timeNow.day()<10){
+		result+='0';
+	}
 	result += String(timeNow.day());
+	if (timeNow.hour()<10){
+		result+='0';
+	}
 	result += String(timeNow.hour());
+	if (timeNow.minute()<10){
+		result+='0';
+	}
 	result += String(timeNow.minute());
+	return result;
+}
+
+String Timer::makeDirName(){
+	timeNow = rtc.now();
+	String result = "";
+	if (timeNow.year()<10){
+			result+='0';
+		}
+	result += String(timeNow.year());
+	if (timeNow.month()<10){
+		result+='0';
+	}
+	result += String(timeNow.month());
+	if (timeNow.day()<10){
+		result+='0';
+	}
+	result += String(timeNow.day());
+
 	return result;
 }
 

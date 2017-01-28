@@ -8,6 +8,13 @@ int freq = 25; // angles measuring frequency
 int p_freq = 50; // pressure measuring frequency
 
 
+const int GPSReadyLED = 40;
+bool gpsReadyState = false;
+const int LogProceedLED = 42;
+int blinkFreq = 2;
+bool blinkState = false;
+unsigned long timeToBlink, lastBlinkTime;
+
 unsigned long baroReadTime, lastBaroRead;
 
 String data = "";
@@ -25,6 +32,15 @@ Logger logger;
 GPS gps;
 
 
+#define PULLUP true        //To keep things simple, we use the Arduino's internal pullup resistor.
+#define INVERT true        //Since the pullup resistor will keep the pin high unless the
+						   //switch is closed, this is negative logic, i.e. a high state
+						   //means the button is NOT pressed. (Assuming a normally open switch.)
+const int DEBOUNCE_MS = 10;     //A debounce time of 20 milliseconds usually works well for tactile button switches.
+Button btnSw(46, PULLUP, INVERT, DEBOUNCE_MS);
+
+String logHeader = "Yaw,Pitch,Roll,YawRate,Acceleration,BaroAltitude,BaroVerticalSpeed,Heading,Latitude,Longitude,Altitude,VerticalSpeed,SpeedKmph";
+
 void initSchedule(){
   // init variables to time the GPS read
   timeToGetGPS = 1000000 / gps_freq;
@@ -37,11 +53,27 @@ void initSchedule(){
   // initialize variables to time the barometer read
   baroReadTime = 1000000 / p_freq;
   lastBaroRead = micros();
+
+  timeToBlink = 1000000 / blinkFreq;
+  lastBlinkTime = micros();
 }
 
-
+void showGPSReady(){
+	  if (gps.isReady() && gpsReadyState == false){
+		  gpsReadyState = true;
+		  digitalWrite(GPSReadyLED, HIGH);
+	  } else if (!gps.isReady()){
+		  gpsReadyState = false;
+		  digitalWrite(GPSReadyLED, LOW);
+	  }
+}
 
 void setup() {
+
+	pinMode(GPSReadyLED, OUTPUT);
+	digitalWrite(GPSReadyLED, LOW);
+	pinMode(LogProceedLED, OUTPUT);
+	digitalWrite(LogProceedLED, LOW);
 
 	initSchedule();
 
@@ -50,23 +82,51 @@ void setup() {
 	barometer.init();
 	filter.begin(freq);
 	timer.init();
+	logger.initSDCard();
 
 	Serial.begin(115200);
-
-	logger.startLog(timer.makeLogName());
 
 	gps.init();
 
 	delay(3000);
+
+//	logger.startLog(timer.makeDirName(),timer.makeLogName());
+}
+
+void logStartStop(){
+	btnSw.read();
+	if (btnSw.wasReleased()){
+		if (logger.isLogging() == false){
+			logger.startLog(timer.makeDirName(),timer.makeLogName());
+			logger.logData(logHeader);
+		} else {
+			logger.stopLog();
+		}
+	}
+}
+
+void showLogStatus(){
+	if (logger.isLogging()){
+			  blinkState = !blinkState;
+			  digitalWrite(LogProceedLED, blinkState);
+	} else {
+			  blinkState = false;
+			  digitalWrite(LogProceedLED, LOW);
+		   }
 }
 
 void loop() {
+
+  showGPSReady();
+
+  logStartStop();
+
   unsigned long microsNow = micros();
 
-//  if (microsNow - lastGPSRead >= timeToGetGPS){
-//    gps.getGPSData();
-//    lastGPSRead += timeToGetGPS;
-//  }
+  if (microsNow - lastBlinkTime >= timeToBlink){
+	  showLogStatus();
+	  lastBlinkTime += timeToBlink;
+  }
 
   gps.getGPSData();
 
@@ -115,26 +175,29 @@ void loop() {
     mpu.setRoll(roll);
     mpu.setYaw(yaw);
 
-    data = "O: ";
+//    data = "O: ";
+
+    data = "";
     data+=String(yaw,4);
-    data+=' ';
+    data+=',';
     data+=String(pitch,4);
-    data+=' ';
+    data+=',';
     data+=String(roll,4);
-    data+=' ';
+    data+=',';
     data+=String(yawRate,4);
-    data+=' ';
+    data+=',';
     data+=String(mpu.calcAccelValue(),4);
-    data+=' ';
+    data+=',';
     data+=String(barometer.getSmoothedAltitude(),4);
-    data+=' ';
+    data+=',';
     data+=String(barometer.calcBaroVertSpd(),4);
-    data+=' ';
+    data+=',';
     data+=String(heading,4);
-    data+=' ';
+    data+=',';
     data+=timer.getTimestr();
-    data+=' ';
+    data+=',';
     data+=gps.getLastGpsData();
+//    data+='\n';
 
     logger.logData(data);
 

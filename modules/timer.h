@@ -23,7 +23,7 @@ public:
 	const String& getTimestr() const ;
 
 	String makeLogName();
-
+	String makeDirName();
 };
 
 
