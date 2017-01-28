@@ -55,7 +55,7 @@ void GPS::parseGPSInfo(){
 
 			  lat = gps.location.lat();
 		      lastGPSData.concat(String(gps.location.lat(), 6));
-		      lastGPSData.concat(' ');
+		      lastGPSData.concat(',');
 		      lon = gps.location.lng();
 		      lastGPSData.concat(String(gps.location.lng(), 6));
 		  } else {
@@ -63,19 +63,19 @@ void GPS::parseGPSInfo(){
 			  lastGPSData.concat(noPosMsg);
 		  }
 		  // parse altitude and calculate the vertical speed
-		  lastGPSData += ' ';
+		  lastGPSData += ',';
 		  if (gps.altitude.isValid()){
 			  alt = gps.altitude.meters();
 		      float altitude = gps.altitude.meters();
 		      lastGPSData += String(altitude,6);
-		      lastGPSData += ' ';
+		      lastGPSData += ',';
 		      lastGPSData += String(calcGPSVertSpd(altitude),6);
 		  } else {
 			  lastGPSData += noAltMsg;
 		  }
 
 		   //get the speed
-		  lastGPSData.concat(' ');
+		  lastGPSData.concat(',');
 		  if (gps.speed.isValid()){
 		      spd = gps.speed.kmph();
 		      lastGPSData.concat(String(gps.speed.kmph(),6));
